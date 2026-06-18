@@ -20,38 +20,38 @@ Both share the same caption generation, posting, and logging code in `common/`.
 1. Go to console.anthropic.com → API Keys → Create Key.
 2. Put it in `.env` as `ANTHROPIC_API_KEY`.
 
-### 1b. Instagram Graph API
-Instagram posting requires a **Business or Creator** account, linked to a
-**Facebook Page**, accessed through a **Meta developer app**.
+### 1b. Instagram API with Instagram Login
+Instagram posting requires a **Business or Creator** account, accessed
+through a **Meta developer app** using Meta's newer Instagram Login flow
+(no Facebook Page Access Token indirection — one Instagram token, one
+Instagram user ID).
 
 1. **Convert your IG account**: Instagram app → Settings → Account type →
    switch to Professional → choose Creator (or Business).
-2. **Link it to a Facebook Page**: if you don't have one, create a Facebook
-   Page (any name, e.g. "ceotuko"). In Instagram Settings → "Linked accounts"
-   → connect that Page.
-3. **Create a Meta app**: go to developers.facebook.com → My Apps → Create
-   App → type "Business" → name it (e.g. ceotuko-poster).
-4. In the app dashboard, add the **Instagram Graph API** product.
-5. Go to Tools → Graph API Explorer:
-   - Select your app, select your Facebook Page as the token target.
-   - Request permissions: `instagram_basic`, `instagram_content_publish`,
-     `pages_show_list`, `pages_read_engagement`.
-   - Generate a short-lived **User Access Token**.
-6. Exchange it for a long-lived token (60 days) by visiting in your browser:
-   `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=YOUR_APP_ID&client_secret=YOUR_APP_SECRET&fb_exchange_token=SHORT_LIVED_TOKEN`
-7. Then get a never-expiring **Page Access Token** by calling
-   `https://graph.facebook.com/v20.0/me/accounts?access_token=LONG_LIVED_USER_TOKEN`
-   — copy the `access_token` for your Page from the response. Put it in
-   `.env` as `IG_ACCESS_TOKEN`.
-8. Get your **Instagram Business Account ID**:
-   `https://graph.facebook.com/v20.0/me?fields=instagram_business_account&access_token=PAGE_ACCESS_TOKEN`
-   Put the returned id in `.env` as `IG_USER_ID`.
-9. While your app is in **Development mode**, it can only post for accounts
-   added as Admin/Developer/Tester under App Roles — add your own IG/FB
-   account there. To post for real publicly with no restrictions you'd
-   eventually submit the app for Meta's App Review (`instagram_content_publish`
-   permission), but Development mode is enough for posting to your own
-   account, which is all you need here.
+2. **Create a Meta app**: go to developers.facebook.com → My Apps → Create
+   App → name it (e.g. ceotuko-poster) → add the use case **"Manage
+   messaging & content on Instagram"** → on the customize screen choose
+   **"API setup with Instagram login"** in the left sidebar.
+3. Under **"1. Add required permissions"**, add the listed permissions plus
+   `instagram_business_content_publish` (needed for posting, not included by
+   default in the messaging preset — add it from the **Permissions and
+   features** page if it's missing).
+4. Under **"2. Generate access tokens"** → **Add account** → log in as
+   @ceotuko and authorize. This both assigns the Instagram Tester role and
+   generates a **short-lived Instagram User Access Token** plus your
+   **Instagram User ID** right there in the dashboard.
+5. Exchange the short-lived token for a long-lived one (60 days) by visiting
+   in your browser:
+   `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=YOUR_INSTAGRAM_APP_SECRET&access_token=SHORT_LIVED_TOKEN`
+   Put the returned `access_token` in `.env` as `IG_ACCESS_TOKEN`, and the
+   Instagram User ID from step 4 as `IG_USER_ID`.
+6. Long-lived tokens expire after 60 days but can be refreshed indefinitely;
+   if posts start failing with an auth error after ~2 months, refresh via:
+   `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=CURRENT_TOKEN`
+7. While your app is in **Development mode**, it can only post for accounts
+   added as Admin/Developer/Tester (which step 4 already did for @ceotuko).
+   That's all you need for posting to your own account — no App Review
+   required for this use case.
 
 ### 1c. TikTok Content Posting API
 1. Go to developers.tiktok.com → Manage Apps → Create an app.

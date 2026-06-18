@@ -1,9 +1,13 @@
-"""Instagram Graph API — publish a Reel from a public video URL."""
+"""Instagram API with Instagram Login — publish a Reel from a public video URL.
+
+Uses the Instagram-scoped user access token directly (no Facebook Page Access
+Token indirection): https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login
+"""
 import time
 import requests
 from . import config
 
-GRAPH_BASE = "https://graph.facebook.com/v20.0"
+GRAPH_BASE = "https://graph.instagram.com/v21.0"
 
 
 class InstagramPostError(Exception):
