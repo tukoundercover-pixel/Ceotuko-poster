@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>ceotuko poster — dashboard</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;padding:2rem;max-width:600px;margin:auto}
+h2{color:#5b8cff}
+.card{background:#1c1c1c;border-radius:10px;padding:1.2rem;margin-bottom:1rem}
+input{width:100%;padding:.5rem;margin:.4rem 0;border-radius:6px;border:1px solid #444;background:#222;color:#eee;box-sizing:border-box}
+button{padding:.5rem 1rem;border-radius:6px;border:none;background:#5b8cff;color:#fff;font-weight:bold}
+.empty{color:#888}
+small{color:#888}
+</style></head>
+<body>
+<h2>ceotuko poster — pending clips</h2>
+{% if not pending %}
+<p class="empty">No new clips. Drop a video into your Dropbox watch folder and it'll show up here within ~20 seconds.</p>
+{% endif %}
+{% for id, item in pending.items() %}
+<div class="card">
+  <strong>{{ item.filename }}</strong><br>
+  <small>found {{ item.added_at }}{% if item.scheduled_for %} — scheduled for {{ item.scheduled_for }}{% endif %}</small>
+  <form method="post" action="/post/{{ id }}">
+    <input type="text" name="description" placeholder="Short description (optional)">
+    <input type="text" name="post_time" placeholder="now or 19:00">
+    <button type="submit">Generate caption &amp; post</button>
+  </form>
+</div>
+{% endfor %}
+</body></html>
