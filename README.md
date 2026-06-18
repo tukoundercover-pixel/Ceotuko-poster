@@ -36,19 +36,27 @@ Instagram user ID).
    `instagram_business_content_publish` (needed for posting, not included by
    default in the messaging preset — add it from the **Permissions and
    features** page if it's missing).
-4. Under **"2. Generate access tokens"** → **Add account** → log in as
-   @ceotuko and authorize. This both assigns the Instagram Tester role and
-   generates a **short-lived Instagram User Access Token** plus your
-   **Instagram User ID** right there in the dashboard.
-5. Exchange the short-lived token for a long-lived one (60 days) by visiting
-   in your browser:
-   `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=YOUR_INSTAGRAM_APP_SECRET&access_token=SHORT_LIVED_TOKEN`
-   Put the returned `access_token` in `.env` as `IG_ACCESS_TOKEN`, and the
-   Instagram User ID from step 4 as `IG_USER_ID`.
-6. Long-lived tokens expire after 60 days but can be refreshed indefinitely;
-   if posts start failing with an auth error after ~2 months, refresh via:
+4. Before this step, you must first add @ceotuko as an **Instagram Tester**:
+   App dashboard → **App roles** → **Roles** → **Add Instagram Testers** →
+   enter your Instagram username → submit. Then accept the invite from the
+   Instagram side: Instagram app/web → Settings → Apps and websites →
+   Tester invites → Accept.
+5. Back on **"API setup with Instagram login"** → under **"2. Generate
+   access tokens"** → **Add account** → log in as @ceotuko and authorize.
+6. Click **Generate Token** next to the connected account. This token is
+   **already long-lived (60 days)** — no exchange step needed. Put it in
+   `.env` as `IG_ACCESS_TOKEN`.
+7. The dashboard's account table shows an ID next to your username, but
+   it's not necessarily the one this token maps to. Get the correct
+   `IG_USER_ID` straight from the token itself:
+   `https://graph.instagram.com/v21.0/me?fields=id,username&access_token=YOUR_TOKEN`
+   (paste that URL in a browser, or run it with curl) — use the `id` it
+   returns.
+8. The token expires after 60 days. Once it's at least 24h old, you can
+   refresh it any time to extend another 60 days:
    `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=CURRENT_TOKEN`
-7. While your app is in **Development mode**, it can only post for accounts
+   Or simplest: just click **Generate Token** again in the dashboard.
+9. While your app is in **Development mode**, it can only post for accounts
    added as Admin/Developer/Tester (which step 4 already did for @ceotuko).
    That's all you need for posting to your own account — no App Review
    required for this use case.
