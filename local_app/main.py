@@ -72,12 +72,27 @@ def run_job(video_path: str, description: str, scheduled_for_str: str):
 
 
 class VideoHandler(FileSystemEventHandler):
+    def __init__(self):
+        self._seen = set()
+
     def on_created(self, event):
-        if event.is_directory:
-            return
-        path = Path(event.src_path)
+        if not event.is_directory:
+            self._handle(Path(event.src_path))
+
+    def on_moved(self, event):
+        # Dragging/dropping a file within the same drive is a move/rename at
+        # the filesystem level, not a create — Explorer does this whenever
+        # source and destination are on the same volume.
+        if not event.is_directory:
+            self._handle(Path(event.dest_path))
+
+    def _handle(self, path: Path):
         if path.suffix.lower() not in VIDEO_EXTS:
             return
+        resolved = str(path.resolve())
+        if resolved in self._seen:
+            return
+        self._seen.add(resolved)
 
         print(f"\nNew video detected: {path.name}")
         print("Waiting for the file to finish copying...")
