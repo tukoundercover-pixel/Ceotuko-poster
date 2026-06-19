@@ -62,30 +62,55 @@ Instagram user ID).
    required for this use case.
 
 ### 1c. TikTok Content Posting API
-1. Go to developers.tiktok.com → Manage Apps → Create an app.
-2. Add the **Content Posting API** product, request scope
-   `video.publish` (and `video.upload`).
-3. Note your **Client Key** and **Client Secret** → put in `.env`.
-4. Run the OAuth flow once to get a refresh token. Easiest path:
-   - Build this authorize URL (replace `YOUR_CLIENT_KEY` and
-     `YOUR_REDIRECT_URI`, which must match a redirect URI registered in your
-     TikTok app settings):
-     `https://www.tiktok.com/v2/auth/authorize/?client_key=YOUR_CLIENT_KEY&scope=video.publish,video.upload&response_type=code&redirect_uri=YOUR_REDIRECT_URI&state=xyz`
-   - Open it, log in as @ceotuko, approve. TikTok redirects to your
-     redirect URI with `?code=...`.
-   - Exchange that code for tokens:
-     ```
-     POST https://open.tiktokapis.com/v2/oauth/token/
-     Content-Type: application/x-www-form-urlencoded
-     client_key=YOUR_CLIENT_KEY&client_secret=YOUR_CLIENT_SECRET&code=THE_CODE&grant_type=authorization_code&redirect_uri=YOUR_REDIRECT_URI
-     ```
-   - The response has `access_token` and `refresh_token`. Put
-     `refresh_token` in `.env` as `TIKTOK_REFRESH_TOKEN` (the app refreshes
-     the access token automatically on every post, so you never need to
-     redo this unless the refresh token itself expires, ~1 year).
-5. **Important limitation**: until TikTok audits and approves your app for
-   the Content Posting API, posts can only go out as **private drafts**
-   (`SELF_ONLY`) — you'll get a notification in the TikTok app to tap "Post".
+TikTok requires a public **Terms of Service URL** and **Privacy Policy URL**
+during app creation (we host ours via GitHub Pages — see `/docs` in this
+repo), plus domain ownership verification (a signature file uploaded to that
+same path). The **Production** version of the app additionally requires a
+demo video before it'll even save your product config — TikTok's own
+guidance is to build and test in **Sandbox** first, which skips that gate
+entirely and is what we actually use here.
+
+1. developers.tiktok.com → Manage Apps → Create an app → Individual.
+2. Fill in Basic info (icon, category, description, ToS/Privacy URLs,
+   Platforms → Web → Web/Desktop URL).
+3. Under **Products**, add **Login Kit** (set a Redirect URI — any HTTPS
+   page you control works, even a static one, since you'll copy the `code`
+   manually from the address bar) then **Content Posting API** → toggle
+   **Direct Post** on (this is what enables `video.publish`, needed for
+   posting with a chosen privacy level rather than just dropping an
+   unstyled draft in your inbox).
+4. Click **Save** — if blocked by "This form has 2 errors" / a required
+   demo video, switch to the **Sandbox** tab instead (top of the page) →
+   **Create Sandbox** → check "Clone from Production" → redo the Products
+   step above inside Sandbox (cloning doesn't always carry it over) → Save
+   succeeds here without needing a demo video.
+5. In Sandbox → **Sandbox settings** → **Target Users** → **Add account** →
+   log in as @ceotuko. This authorizes your *real* account to use the
+   Sandbox app (Sandbox isn't limited to fake test accounts).
+6. Note the **Sandbox's own Client Key/Secret** (different from
+   Production's) → put in `.env`.
+7. Build this authorize URL (your own client key + redirect URI):
+   `https://www.tiktok.com/v2/auth/authorize/?client_key=YOUR_CLIENT_KEY&scope=user.info.basic,video.publish,video.upload&response_type=code&redirect_uri=YOUR_REDIRECT_URI&state=xyz`
+   Open it, log in as @ceotuko, approve.
+8. It redirects to your redirect URI with `?code=...`. Select the full
+   address bar URL (Ctrl+A, Ctrl+C — the code is long and gets visually cut
+   off) and copy the `code` value out of it.
+9. Exchange that code for tokens:
+   ```
+   POST https://open.tiktokapis.com/v2/oauth/token/
+   Content-Type: application/x-www-form-urlencoded
+   client_key=YOUR_CLIENT_KEY&client_secret=YOUR_CLIENT_SECRET&code=THE_CODE&grant_type=authorization_code&redirect_uri=YOUR_REDIRECT_URI
+   ```
+   The response has `access_token` and `refresh_token` (valid ~365 days).
+   Put `refresh_token` in `.env` as `TIKTOK_REFRESH_TOKEN` — the app
+   refreshes the access token automatically on every post, so you never
+   need to redo this until the refresh token itself expires.
+10. **Important limitation**: until TikTok audits and approves your
+    Production app for the Content Posting API (a separate, later step
+    requiring that demo video — at which point you'd have a working
+    integration to film), posts only go out as **private drafts**
+    (`SELF_ONLY`) — you'll get a notification in the TikTok app to tap
+    "Post".
    Apply for the audit from your app's dashboard (Content Posting API →
    request audit) when you're ready for fully automatic public posting; once
    approved, flip `PRIVACY_LEVEL` in `common/tiktok.py` to
